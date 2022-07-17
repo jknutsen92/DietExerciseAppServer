@@ -12,6 +12,9 @@ def load_db_from_external_cache(local_path: str, external_path:str, db_name:str)
             if not local_dir.exists():
                 local_dir.parent.mkdir()
             shutil.copyfile(extern, local)
+    elif not local.exists():
+        local.parent.mkdir()
+        local.touch()
 
 
 def write_db_to_external_cache(local_path: str, external_path: str, db_name: str) -> None:
