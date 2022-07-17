@@ -1,3 +1,5 @@
 *.pyc
 *.db
 databases/*.db
+scratch.txt
+launch.json

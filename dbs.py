@@ -10,15 +10,16 @@ EXTERNAL_DB_PATH_WINDOWS        = "F:\\databases\\"
 EXTERNAL_DB_PATH_LINUX          = "/run/media/jeffrey/DATA/databases/"
 LOCAL_DB_PATH_WINDOWS           = "databases\\"
 LOCAL_DB_PATH_LINUX             = "databases/"
-DATABASE_URL                    = "sqlite:///databases/store.db"
+DATABASE_NAME                   = "store.db"
+DATABASE_URL                    = f"sqlite:///databases/{DATABASE_NAME}"
 
 
 if EXTERNAL_DB_CACHING:
     system = platform.system()
     if system == "Linux":
-        load_db_from_external_cache(system, LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, "store.db")
+        load_db_from_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
     elif system == "Windows":
-        load_db_from_external_cache(system, LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, "store.db")
+        load_db_from_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
 
 
 # DB Init
@@ -40,6 +41,6 @@ def cleanup_databases():
     if EXTERNAL_DB_CACHING:
         system = platform.system()
         if system == "Linux":
-            write_db_to_external_cache(system, LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, "store.db")
+            write_db_to_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
         elif system == "Windows":
-            write_db_to_external_cache(system, LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, "store.db")
+            write_db_to_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
