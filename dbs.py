@@ -1,5 +1,6 @@
 from databases  import Database
 from sqlalchemy import MetaData, Table, Column, Integer, String
+import sqlalchemy
 from funcs      import load_db_from_external_cache, write_db_to_external_cache
 
 import platform
@@ -39,6 +40,9 @@ items = Table(
     Column("description",   String(1000),   nullable=True),
     Column("owner_id",      Integer)
 )
+
+engine = sqlalchemy.create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=True)
+metadata.create_all(engine)
 
 # DB cleanup
 def cleanup_databases():

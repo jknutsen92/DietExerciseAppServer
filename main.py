@@ -73,6 +73,3 @@ async def update_item(item_id: int, details: ItemDetails):
 async def delete_item(item_id: int):
     delete = items.delete().where(items.c.id == item_id)
     return await db.execute(delete)
-
-
-cleanup_databases()
