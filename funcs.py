@@ -14,6 +14,11 @@ def load_db_from_external_cache(local_path: str, external_path:str, db_name:str)
             shutil.copyfile(extern, local)
 
 
+def load_db_from_cloud():
+    # TODO
+    pass
+
+
 def write_db_to_external_cache(local_path: str, external_path: str, db_name: str) -> None:
     local = Path(f"{local_path}{db_name}")
     extern = Path(f"{external_path}{db_name}")
@@ -26,3 +31,7 @@ def write_db_to_external_cache(local_path: str, external_path: str, db_name: str
 
     shutil.copyfile(local, extern)
     Path(f"{local_path}{db_name}").touch()
+
+def write_db_to_cloud():
+    # TODO
+    pass

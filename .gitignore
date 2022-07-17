@@ -3,3 +3,4 @@
 databases/*.db
 scratch.txt
 launch.json
+*.code-workspace

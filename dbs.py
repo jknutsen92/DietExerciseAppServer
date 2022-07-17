@@ -6,6 +6,7 @@ import platform
 
 
 EXTERNAL_DB_CACHING             = True
+CLOUD_DB_CACHING                = False
 EXTERNAL_DB_PATH_WINDOWS        = "F:\\databases\\"
 EXTERNAL_DB_PATH_LINUX          = "/run/media/jeffrey/DATA/databases/"
 LOCAL_DB_PATH_WINDOWS           = "databases\\"
@@ -20,6 +21,9 @@ if EXTERNAL_DB_CACHING:
         load_db_from_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
     elif system == "Windows":
         load_db_from_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
+elif CLOUD_DB_CACHING:
+    # TODO
+    pass
 
 
 # DB Init
@@ -44,3 +48,5 @@ def cleanup_databases():
             write_db_to_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
         elif system == "Windows":
             write_db_to_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
+    elif CLOUD_DB_CACHING:
+        pass
