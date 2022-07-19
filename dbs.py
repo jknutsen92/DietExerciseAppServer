@@ -1,18 +1,9 @@
-from databases  import Database
-from sqlalchemy import MetaData, Table, Column, Integer, String, create_engine
-from funcs      import load_db_from_external_cache, write_db_to_external_cache
-
 import platform
 
-# TODO: Place these in a JSON config file
-EXTERNAL_DB_CACHING             = True
-CLOUD_DB_CACHING                = False
-EXTERNAL_DB_PATH_WINDOWS        = "F:\\databases\\"
-EXTERNAL_DB_PATH_LINUX          = "/run/media/jeffrey/DATA/databases/"
-LOCAL_DB_PATH_WINDOWS           = "databases\\"
-LOCAL_DB_PATH_LINUX             = "databases/"
-DATABASE_NAME                   = "store.db"
-DATABASE_URL                    = f"sqlite:///databases/{DATABASE_NAME}"
+from databases  import Database
+from sqlalchemy import MetaData, Table, Column, Integer, String, create_engine
+from backup     import load_db_from_cloud, load_db_from_external_cache, write_db_to_external_cache
+from cfg        import *
 
 
 if EXTERNAL_DB_CACHING:
@@ -21,9 +12,8 @@ if EXTERNAL_DB_CACHING:
         load_db_from_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
     elif system == "Windows":
         load_db_from_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
-elif CLOUD_DB_CACHING:
-    # TODO
-    pass
+if CLOUD_DB_CACHING:
+    load_db_from_cloud()
 
 
 # DB Init

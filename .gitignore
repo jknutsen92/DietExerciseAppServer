@@ -4,3 +4,5 @@ databases/*.db
 scratch.txt
 launch.json
 *.code-workspace
+keys/*
+*.pickle

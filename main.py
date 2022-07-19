@@ -1,4 +1,3 @@
-from distutils.command import clean
 from fastapi    import FastAPI, Depends
 from pydantic   import BaseModel
 from typing     import Optional, List
