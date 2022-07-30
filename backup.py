@@ -31,21 +31,19 @@ def load_db_from_cloud(local_path, db_name):
         query = f"name='{DATABASE_NAME}' and '{folder_id}' in parents"
         response = service.files().list(q=query, fields="files(id, modifiedTime)").execute()
         file = response.get("files")[0]
-        # TODO: fix datetime string format
-        # timestring format: '2022-07-25T21:58:23.278Z'
-        dt = datetime.strptime(file["modifiedTime"], "Y-m-d")
-        ts = dt.timestamp()
-        lcl_ts = local.stat().st_mtime
-        if ts > lcl_ts:
+
+        cloud_dt = datetime.strptime(file["modifiedTime"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if cloud_dt.timestamp() > local.stat().st_mtime:
             request = service.files().get_media(fileId=file["id"])
-            db = BytesIO()
-            downloader = MediaIoBaseDownload(db, request)
+            backup_file = BytesIO()
+            downloader = MediaIoBaseDownload(backup_file, request)
             done = False
             while not done:
                 status, done = downloader.next_chunk()
                 print(f"{DATABASE_NAME} download {int(status.progress() * 100)}% completed")
 
-            copyfile(db, local)
+            with open(local, "wb") as localFile:
+                localFile.write(backup_file.getbuffer())
 
     except HttpError as e:
         print(f"Could not find {DATABASE_NAME} in drive")
@@ -95,5 +93,5 @@ def write_db_to_cloud(local_path, db_name):
     
 
 
-load_db_from_cloud("databases/", "store.db")
+#load_db_from_cloud("databases/", "store.db")
 #write_db_to_cloud("databases/", "store.db")

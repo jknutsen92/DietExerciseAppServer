@@ -26,7 +26,8 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await db.disconnect()
-    cleanup_databases()
+# TODO: use backup class
+#    cleanup_databases()
 
 # FastAPIs
 @app.get("/", response_model=str)
