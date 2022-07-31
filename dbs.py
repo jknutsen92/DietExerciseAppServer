@@ -1,21 +1,18 @@
-import platform
-
 from databases  import Database
 from sqlalchemy import MetaData, Table, Column, Integer, String, create_engine
-from backup     import load_db_from_cloud, load_db_from_external_cache, write_db_to_external_cache
-from cfg        import *
+from backup     import Backup
 
-# TODO abstract this into a backup class
-"""
-if EXTERNAL_DB_CACHING:
-    system = platform.system()
-    if system == "Linux":
-        load_db_from_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
-    elif system == "Windows":
-        load_db_from_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
-if CLOUD_DB_CACHING:
-    load_db_from_cloud()
-"""
+DATABASE_NAME               = "store.db"
+BACKUP_CONFIG_FILE          = "config/backup.json"
+DATABASE_URL                = f"sqlite:///databases/{DATABASE_NAME}"
+
+database_backup = Backup(
+                    DATABASE_NAME, 
+                    BACKUP_CONFIG_FILE,
+                    external_drive_caching=True,
+                    cloud_caching=True
+)
+database_backup.load()
 
 # DB Init
 metadata = MetaData()
@@ -33,17 +30,3 @@ items = Table(
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=True)
 metadata.create_all(engine)
-
-# DB cleanup
-# TODO: abstract this into a backup class
-"""
-def cleanup_databases():
-    if EXTERNAL_DB_CACHING:
-        system = platform.system()
-        if system == "Linux":
-            write_db_to_external_cache(LOCAL_DB_PATH_LINUX, EXTERNAL_DB_PATH_LINUX, DATABASE_NAME)
-        elif system == "Windows":
-            write_db_to_external_cache(LOCAL_DB_PATH_WINDOWS, EXTERNAL_DB_PATH_WINDOWS, DATABASE_NAME)
-    elif CLOUD_DB_CACHING:
-        pass
-"""

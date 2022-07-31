@@ -1,7 +1,7 @@
 from fastapi    import FastAPI, Depends
 from pydantic   import BaseModel
 from typing     import Optional, List
-from dbs        import db, items, cleanup_databases
+from dbs        import db, items
 
 # Data Validation
 class Item(BaseModel):
@@ -26,8 +26,6 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await db.disconnect()
-# TODO: use backup class
-#    cleanup_databases()
 
 # FastAPIs
 @app.get("/", response_model=str)
