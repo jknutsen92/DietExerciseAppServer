@@ -1,0 +1,44 @@
+$new-item-hover-color: #777
+    
+.new-item-menu
+    display: flex
+    flex-direction: row
+    width: 80%
+    .dropdown-menu
+        #textItemSearch
+            display: none
+        .dropdown-box
+            width: 80%
+            position: absolute
+            border: 2px solid black
+            display: none
+            background-color: #fff
+            ul
+                padding: 0
+                margin: 0
+                list-style: none
+                list-style-image: none
+                max-height: 80vh
+                overflow-y: scroll
+                li
+                    display: flex
+                    flex-direction: row
+                    justify-content: start
+                    align-content: center
+                    border-bottom: 1px ridge black
+                    height: 5em
+                    &:hover
+                        background-color: $new-item-hover-color
+                    img
+                        margin: 0.5em 1em 0 0
+                        display: inline
+                        height: 80%
+                        width: 10%
+                        object-fit: cover
+                    h1
+                        display: inline
+                        font-size: 1.5em
+            .details
+                display: none
+    .submit-panel
+        display: none

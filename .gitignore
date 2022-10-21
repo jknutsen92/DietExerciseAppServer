@@ -7,3 +7,5 @@ launch.json
 keys/*
 *.pickle
 config/*.json
+json
+databases/schema.sql
