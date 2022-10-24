@@ -4,10 +4,14 @@ app = {                                                                     // S
         main: {
             e:                          document.querySelector("body > main"),
             modalDialog: {//TODO: Refactor modal dialog to be outside of main
-                e:                      document.querySelector(".modal-dialog"),
-                header:                 document.querySelector(".modal-dialog > .modal-header"),
-                content:                document.querySelector(".modal-dialog > .modal-content"),
-                footer:                 document.querySelector(".modal-dialog > .modal-footer")
+                background:             document.querySelector(".modal-background"),
+                content:                document.querySelector(".modal-background > .modal-content"),
+                header:                 document.querySelector(".modal-content > .modal-header"),
+                close:                  document.querySelector(".modal-content > .modal-header > .close"),
+                body:                   document.querySelector(".modal-content > .modal-body"),
+                footer:                 document.querySelector(".modal-content > .modal-footer"),
+                inputQty:               document.querySelector("#modalInputQty"),
+                btnConfirm:             document.querySelector("#btnModalConfirm")           
             },
             newItem: {//TODO: Refactor new item menu to be outside of main
                 btnAddFoodItem:         document.querySelector("#btnAddFoodItem"),
@@ -23,7 +27,12 @@ app = {                                                                     // S
             }
         }
     },
-    domParser: new DOMParser()
+    domParser: new DOMParser(),
+    uiState: {
+        modalDialog: {
+            selectedFoodDetails: null
+        }
+    }
 };
 
 function initNewItemMenu() {
@@ -36,6 +45,11 @@ function resetNewItemMenu() {
     app.e.main.newItem.textInput.style.display =   "none";
     app.e.main.newItem.dropdownBox.style.display = "none";
     app.e.main.newItem.submitPanel.style.display = "none";
+
+    app.e.main.newItem.textInput.removeEventListener("input", populateFoodSnapshotList);
+    app.e.main.newItem.textInput.removeEventListener("input", populateExerciseDetailsList);
+    app.e.main.newItem.list.innerHTML = "";
+    app.e.main.newItem.textInput.value = "";
 }
 
 function activateNewItemSearch() {
@@ -60,7 +74,7 @@ async function populateFoodSnapshotList(event) {
         // Create item element with snapshot data
         const item = getFoodSnapshotItemNode(snapshot);
 
-        // Set the focus/mouseover and blur/mouseout handlers for each snapshot item
+        // Set the handlers for each snapshot item
         item.addEventListener("click", spawnFoodDetailsWindow);
 
         // Insert item element into list
@@ -79,43 +93,89 @@ async function spawnFoodDetailsWindow(event) {
         )
     );
     const foodDetails = response[0];
+    app.uiState.modalDialog.selectedFoodDetails = foodDetails;
+
     // Replace header content
-    app.e.main.modalDialog.header.querySelector("h2").innerText = `Add ${foodDetails.name}?`;
+    app.e.main.modalDialog.header.querySelector("h2 > span").innerText = foodDetails.name;
     
     // Replace modal content 
     const modalContent = getFoodDetailsModalContent(foodDetails);
-    app.e.main.modalDialog.content.replaceWith(modalContent);
-    app.e.main.modalDialog.content = modalContent;
+    app.e.main.modalDialog.body.replaceWith(modalContent);
+    app.e.main.modalDialog.body = modalContent;
 
-    app.e.main.modalDialog.e.style.display = "block";
+    // Set handlers
+    app.e.main.modalDialog.inputQty.addEventListener("keydown", confirmFoodSelection);
+    app.e.main.modalDialog.btnConfirm.addEventListener("click", confirmFoodSelection);
+    
+    // Display modal dialog
+    app.e.main.modalDialog.background.style.display = "block";
 }
 
-function destroyFoodDetailsWindow(event) {
-    const window = event.target;
+function confirmFoodSelection(event) {
+    const servings = parseFloat(app.e.main.modalDialog.inputQty.value);
+    const details = app.uiState.modalDialog.selectedFoodDetails;
+    const foodConsumed = new FoodConsumed(
+        details.name,
+        details.calories,
+        servings,
+        details.servingQty,
+        details.servingUnit,
+        details.servingWeight,
+        details.macros,
+        details.imageURL
+    )
+
+    // TODO: Send FoodConsumed to server
+    
+
+    resetModalDialog();
+    resetNewItemMenu();
+    insertFoodSelectionIntoUI(foodConsumed);
+    app.uiState.modalDialog.selectedFoodDetails = null;
+}
+
+function insertFoodSelectionIntoUI(foodConsumed) {
+    // TODO:
+    // Insert item into ui controls
+
+    // Update dynamic UI
 }
 
 function populateExerciseDetailsList(event) {
     const query = event.target.value;
-    // Delete existing list items
-    console.log(query);
-    // Populate on-
+    //TODO:
+    // Get exercise details
+
+    // Set handlers
+
+    // Insert into list
 }
 
-function spawnFoodConfirmationDialog(event) {
-    const foodDetails = event.target.querySelector(".details");
-    // Spawn window
+async function spawnExerciseDetailsWindow(event) {
+    //TODO:
 }
 
-function confirmFoodSelection(event) {
-    const servings = event.target.parentElement.querySelector("#textConfirmQty");
+function confirmExerciseSelection(event) {
+    const servings = parseFloat(app.e.main.modalDialog.inputQty.value);
+    resetModalDialog()
+    resetNewItemMenu()
+    //TODO:
+    // Hide food details dialog
+    // Reset food snapshot list
+    // Insert into UI tables/graphs/etc
 }
 
-function spawnExerciseConfirmationDialog(event) {
-    const exerciseDetails = event.target.querySelector(".details");
+function insertExerciseSelectionIntoUI(foodDetails) {
+    //TODO:
+    // Insert item into ui controls
+
+    // Update dynamic UI
 }
 
-function confirmExerciseConfirmation(event) {
-    const hours = event.target.parentElement.querySelector("#textConfirmQty");
+function resetModalDialog() {
+    //TODO:
+    // Unset handlers
+    // Hide food details dialog
 }
 
 window.addEventListener("load", (event) => {
@@ -125,44 +185,49 @@ window.addEventListener("load", (event) => {
 window.addEventListener("keydown", (event) => {
     if (event.key == "Escape") {
         app.e.main.newItem.dropdownBox.style.display = "none";
-        app.e.main.modalDialog.e.style.display = "none";
+        app.e.main.modalDialog.background.style.display = "none";
         document.activeElement.blur();
     }
 });
 
+// 'Add Food' button listeners
 app.e.main.newItem.btnAddFoodItem.addEventListener("click", (event) => {
     activateNewItemSearch();
     app.e.main.newItem.textInput.addEventListener("input", populateFoodSnapshotList);
 });
 
+// 'Add Exercise' button listeners
 app.e.main.newItem.btnAddExerciseItem.addEventListener("click", (event) => {
     activateNewItemSearch();
     app.e.main.newItem.textInput.addEventListener("input", populateExerciseDetailsList);
 });
 
-app.e.main.newItem.btnCancelNewItem.addEventListener("click", (event) => {
-    resetNewItemMenu();
-    app.e.main.newItem.textInput.removeEventListener("input", populateFoodSnapshotList);
-    app.e.main.newItem.textInput.removeEventListener("input", populateExerciseDetailsList);
-    app.e.main.newItem.list.innerHTML = "";
-    app.e.main.newItem.textInput.value = "";
-});
+// New item cancel button listeners
+app.e.main.newItem.btnCancelNewItem.addEventListener("click", resetNewItemMenu);
 
+// New item menu listeners
 app.e.main.newItem.menu.addEventListener("focusin", (event) => {
     if (app.e.main.newItem.list.firstChild) {
         app.e.main.newItem.dropdownBox.style.display = "block";
     }
 });
 
+// New item dropdown box listeners
 app.e.main.newItem.dropdownBox.addEventListener("focusout", (event) => {
     app.e.main.newItem.dropdownBox.style.display = "none";
 });
 
+// General window click listener
 window.addEventListener("click", (event) => {
     if (!event.path.includes(app.e.main.newItem.menu)) {
         app.e.main.newItem.dropdownBox.style.display = "none";
     }
-    if (!event.path.includes(app.e.main.modalDialog.e)) {
-        app.e.main.modalDialog.e.style.display = "none";
+    if (event.target == app.e.main.modalDialog.background) {
+        app.e.main.modalDialog.background.style.display = "none";
     }
+});
+
+// Modal dialog window close button listener
+app.e.main.modalDialog.close.addEventListener("click", (event) => {
+    app.e.main.modalDialog.background.style.display = "none";
 });

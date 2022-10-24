@@ -9,60 +9,54 @@ function getFoodSnapshotItemNode(foodSnapshot) {
 
 function getFoodDetailsModalContent(foodDetails) {
     return app.domParser.parseFromString(
-        `<div class="modal-content">
-            <div>
+        `<div class="modal-body">
+            <div class="image-panel">
                 <img src="${foodDetails.imageURL}" alt="${foodDetails.name}">
                 <label>${foodDetails.servingQty} ${foodDetails.servingUnit} per serving</label>
             </div>
-            <div>
+            <div class="info-panel">
                 <table>
                     <caption>Nutrients Per Serving</caption>
-                    <thead>
-                        <tr>
-                            <th>Macro</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         <tr>
-                            <td>Calories</td>
-                            <td>${foodDetails.calories}<em>(kcal)</em></td>
+                            <td class="macro">Calories</td>
+                            <td class="value">${foodDetails.calories}<em>(kcal)</em></td>
                         </tr>
                         <tr>
-                            <td>Carbohydrates</td>
-                            <td>${foodDetails.macros.carbohydrates}<em>(g)</em></td>
+                            <td class="macro">Carbohydrates</td>
+                            <td class="value">${foodDetails.macros.carbohydrates}<em>(g)</em></td>
                         </tr>
                         <tr>
-                            <td>Protein</td>
-                            <td>${foodDetails.macros.protein}<em>(g)</em></td>
+                            <td class="macro">Protein</td>
+                            <td class="value">${foodDetails.macros.protein}<em>(g)</em></td>
                         </tr>
                         <tr>
-                            <td>Total Fat</td>
-                            <td>${foodDetails.macros.totalFat}<em>(g)</em></td>
+                            <td class="macro">Total Fat</td>
+                            <td class="value">${foodDetails.macros.totalFat}<em>(g)</em></td>
                         </tr>
                         <tr>
-                            <td>Saturated Fat</td>
-                            <td>${foodDetails.macros.saturatedFat}<em>(g)</em></td>
+                            <td class="macro">Saturated Fat</td>
+                            <td class="value">${foodDetails.macros.saturatedFat}<em>(g)</em></td>
                         </tr>
                         <tr>
-                            <td>Sugars</td>
-                            <td>${foodDetails.macros.sugars}<em>(g)</em></td>
+                            <td class="macro">Sugars</td>
+                            <td class="value">${foodDetails.macros.sugars}<em>(g)</em></td>
                         </tr>
                         <tr>
-                            <td>Sodium</td>
-                            <td>${foodDetails.macros.sodium}<em>(mg)</em></td>
+                            <td class="macro">Sodium</td>
+                            <td class="value">${foodDetails.macros.sodium}<em>(mg)</em></td>
                         </tr>
                         <tr>
-                            <td>Cholesterol</td>
-                            <td>${foodDetails.macros.cholesterol}<em>(mg)</em></td>
+                            <td class="macro">Cholesterol</td>
+                            <td class="value">${foodDetails.macros.cholesterol}<em>(mg)</em></td>
                         </tr>
                         <tr>
-                            <td>Dietary Fiber</td>
-                            <td>${foodDetails.macros.dietaryFiber}<em>(g)</em></td>
+                            <td class="macro">Dietary Fiber</td>
+                            <td class="value">${foodDetails.macros.dietaryFiber}<em>(g)</em></td>
                         </tr>
                         <tr>
-                            <td>Potassium</td>
-                            <td>${foodDetails.macros.potassium}<em>(mg)</em></td>
+                            <td class="macro">Potassium</td>
+                            <td class="value">${foodDetails.macros.potassium}<em>(mg)</em></td>
                         </tr>
                     </tbody>
                 </table>
