@@ -1,7 +1,7 @@
 from fastapi    import FastAPI, Depends
 from pydantic   import BaseModel
 from typing     import Optional, List
-from dbs        import db, items
+from dbs        import db, user
 
 # Data Validation
 class Item(BaseModel):
