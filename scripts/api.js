@@ -41,7 +41,6 @@ class FoodAPI {
     }
 
     async getFood(foodSnapshot) {
-        // TODO: refactor
         if (!foodSnapshot.idInAPI) {
             return await this.#getNatural(foodSnapshot.name);
         }

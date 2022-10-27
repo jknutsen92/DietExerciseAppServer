@@ -28,78 +28,6 @@
                 <option value="year">This Year</option>
             </select>
         </div>
-    </header>
-    <main>
-        <!--TODO: Refactor this outside of main-->
-        <div class="modal-background">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="close">&times;</span>
-                    <h2>Add <span>bacon</span>?</h2>
-                </div>
-                <div class="modal-body">
-                    <div class="image-panel">
-                        <img src="https://nix-tag-images.s3.amazonaws.com/11_highres.jpg" alt="bacon">
-                        <label>3 slices per serving</label>
-                    </div>
-                    <div class="info-panel">
-                        <table>
-                            <caption>Nutrients Per Serving</caption>
-                            <tbody>
-                                <tr>
-                                    <td class="macro">Calories</td>
-                                    <td class="value"><span>687</span> <em>(kcal)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Carbohydrates</td>
-                                    <td class="value"><span>0.59</span> <em>(g)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Protein</td>
-                                    <td class="value"><span>11.7</span> <em>(g)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Total Fat</td>
-                                    <td class="value"><span>12.11</span> <em>(g)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Saturated Fat</td>
-                                    <td class="value"><span>4.13</span> <em>(g)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Sugars</td>
-                                    <td class="value"><span>0</span> <em>(g)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Sodium</td>
-                                    <td class="value"><span>580.98</span> <em>(mg)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Cholesterol</td>
-                                    <td class="value"><span>34.16</span> <em>(mg)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Dietary Fiber</td>
-                                    <td class="value"><span>0</span> <em>(g)</em></td>
-                                </tr>
-                                <tr>
-                                    <td class="macro">Potassium</td>
-                                    <td class="value"><span>172.16</span> <em>(mg)</em></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div>
-                        <label for="">Servings:</label>
-                        <input type="number" id="modalInputQty">
-                    </div>
-                    <button id="btnModalConfirm">&checkmark;</button>
-                </div>
-            </div>
-        </div>
-        <!-- TODO: Refactor new item header to be outside of main-->
         <div class="new-item-menu">
             <div class="select-panel">
                 <button id="btnAddFoodItem">Add Food</button>
@@ -836,6 +764,76 @@
                 <button id="btnCancelNewItem">Cancel</button>
             </div>
         </div>
+    </header>
+    <div class="modal-background">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2>Add <span>bacon</span>?</h2>
+            </div>
+            <div class="modal-body">
+                <div class="image-panel">
+                    <img src="https://nix-tag-images.s3.amazonaws.com/11_highres.jpg" alt="bacon">
+                    <label>3 slices per serving</label>
+                </div>
+                <div class="info-panel">
+                    <table>
+                        <caption>Nutrients Per Serving</caption>
+                        <tbody>
+                            <tr>
+                                <td class="macro">Calories</td>
+                                <td class="value"><span>687</span> <em>(kcal)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Carbohydrates</td>
+                                <td class="value"><span>0.59</span> <em>(g)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Protein</td>
+                                <td class="value"><span>11.7</span> <em>(g)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Total Fat</td>
+                                <td class="value"><span>12.11</span> <em>(g)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Saturated Fat</td>
+                                <td class="value"><span>4.13</span> <em>(g)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Sugars</td>
+                                <td class="value"><span>0</span> <em>(g)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Sodium</td>
+                                <td class="value"><span>580.98</span> <em>(mg)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Cholesterol</td>
+                                <td class="value"><span>34.16</span> <em>(mg)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Dietary Fiber</td>
+                                <td class="value"><span>0</span> <em>(g)</em></td>
+                            </tr>
+                            <tr>
+                                <td class="macro">Potassium</td>
+                                <td class="value"><span>172.16</span> <em>(mg)</em></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div>
+                    <label for="">Servings:</label>
+                    <input type="number" id="modalInputQty">
+                </div>
+                <button id="btnModalConfirm">&checkmark;</button>
+            </div>
+        </div>
+    </div>
+    <main>
         <div class="goals-display">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Aspernatur quod laudantium, sequi asperiores dolor consectetur vitae beatae adipisci animi in dolore nostrum fugiat eligendi omnis ducimus voluptas. Temporibus, error ipsum.
         </div>

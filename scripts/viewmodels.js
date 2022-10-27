@@ -1,7 +1,7 @@
 function getFoodSnapshotItemNode(foodSnapshot) {
     return app.domParser.parseFromString(
-        `<li idInAPI="${foodSnapshot.idInAPI ?? ''}">
-            <img src="${foodSnapshot.imageURL}" alt="${foodSnapshot.name}">
+        `<li api="${foodSnapshot.id ?? ''}">
+            <img src="${foodSnapshot.image_url}" alt="${foodSnapshot.name}">
             <h1>${foodSnapshot.name}</h1>
         </li>`
     ,"text/html").body.firstChild;
@@ -11,7 +11,7 @@ function getFoodDetailsModalContent(foodDetails) {
     return app.domParser.parseFromString(
         `<div class="modal-body">
             <div class="image-panel">
-                <img src="${foodDetails.imageURL}" alt="${foodDetails.name}">
+                <img src="${foodDetails.image_url}" alt="${foodDetails.name}">
                 <label>${foodDetails.servingQty} ${foodDetails.servingUnit} per serving</label>
             </div>
             <div class="info-panel">
@@ -32,11 +32,11 @@ function getFoodDetailsModalContent(foodDetails) {
                         </tr>
                         <tr>
                             <td class="macro">Total Fat</td>
-                            <td class="value">${foodDetails.macros.totalFat}<em>(g)</em></td>
+                            <td class="value">${foodDetails.macros.total_fat}<em>(g)</em></td>
                         </tr>
                         <tr>
                             <td class="macro">Saturated Fat</td>
-                            <td class="value">${foodDetails.macros.saturatedFat}<em>(g)</em></td>
+                            <td class="value">${foodDetails.macros.saturated_fat}<em>(g)</em></td>
                         </tr>
                         <tr>
                             <td class="macro">Sugars</td>
@@ -52,7 +52,7 @@ function getFoodDetailsModalContent(foodDetails) {
                         </tr>
                         <tr>
                             <td class="macro">Dietary Fiber</td>
-                            <td class="value">${foodDetails.macros.dietaryFiber}<em>(g)</em></td>
+                            <td class="value">${foodDetails.macros.dietary_fiber}<em>(g)</em></td>
                         </tr>
                         <tr>
                             <td class="macro">Potassium</td>

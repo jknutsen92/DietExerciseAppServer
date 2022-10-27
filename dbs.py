@@ -40,12 +40,14 @@ User = Table(
     "User",
     metadata,
     Column("id",                BigInteger,         primary_key=True),
+    Column("first_name",        String(50),         nullable=False),
+    Column("last_name",         String(50),         nullable=False),
     Column("email",             String(100),        nullable=False),
     Column("pass_hash",         String(64),         nullable=False),        # SHA-256
     Column("goal_id",           Integer,            nullable=True),
     Column("birthdate",         Date,               nullable=False),
-    Column("weight",            Float,              nullable=False),
-    Column("height",            Float,              nullable=False),
+    Column("weight",            Float,              nullable=False),        # (kg)
+    Column("height",            Float,              nullable=False),        # (cm)
     Column("gender",            Enum(GenderEnum),   nullable=False)
 )
 
