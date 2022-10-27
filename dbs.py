@@ -15,9 +15,10 @@ from sqlalchemy import (
     Table
 )
 
-DATABASE_NAME               = "dietapp.db"
-BACKUP_CONFIG_FILE          = "config/backup.json"
-DATABASE_URL                = f"sqlite:///databases/{DATABASE_NAME}"
+DATABASE_NAME=      "dietapp.db"
+BACKUP_CONFIG_FILE= "config/backup.json"
+DATABASE_URL=       f"sqlite:///databases/{DATABASE_NAME}"
+SALT_PATH=          "./keys/salt.txt"
 
 database_backup = Backup(
                     DATABASE_NAME, 
@@ -99,3 +100,6 @@ ExerciseCompleted = Table(
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=True)
 metadata.create_all(engine)
+
+with open(SALT_PATH, "r") as salt_file:
+    salt = salt_file.readline()
