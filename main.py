@@ -1,9 +1,10 @@
-import email
+import time
 from fastapi    import FastAPI, Depends
-from typing     import List, Union
+from typing     import Union
 from datetime   import date, datetime
-from hashlib    import sha1, sha256
-from dbs        import db, User, Food, FoodEaten, Exercise, ExerciseCompleted, salt
+from hashlib    import sha1
+from argon2     import PasswordHasher
+from dbs        import db, User, Food, FoodEaten, Exercise, ExerciseCompleted
 from models     import (
     ExerciseDone,
     ExerciseEntry,
@@ -15,6 +16,10 @@ from models     import (
     UserInfo,
     UserMeasures
 )
+
+# Init dependenices
+ph = PasswordHasher()
+sha = sha1()
 
 # FastAPI init
 app = FastAPI()
@@ -35,7 +40,7 @@ async def add_user(new_user: NewUserInfo):
             first_name=new_user.first_name,
             last_name=new_user.last_name,
             email=new_user.email,
-            pash_hash=sha256(new_user.password + salt),
+            pash_hash=ph.hash(new_user.password),
             goal_id=new_user.goal_id,
             birthdate=new_user.birthdate,
             weight=new_user.weight,
@@ -71,12 +76,53 @@ async def update_user_measures(id: int, user_measures: UserMeasures):
 @app.get("/user/{id}", response_model=UserInfo)
 async def get_user(id: int):
     #TODO: Ensure user is authorized for this id, check request headers for session token 
-    pass
+    return await db.fetch_one(
+        User.select().where(User.c.id == id)
+    )
 
-@app.post("/new_food_entry", response_model=FoodItemEaten)
-async def create_food_entry(item: FoodEntry):
+@app.post("/new_food_entry/{user_id}", response_model=FoodItemEaten)
+async def create_food_entry(user_id: int, item: FoodEntry):
     #TODO: Ensure user is authorized for this id, check request headers for session token 
-    pass
+    food_id = sha.update(item.name.encode("utf-8")).hexdigest()
+    food_exists = await db.fetch_val(
+        Food.select(1).where(Food.c.id == food_id)
+    )
+    if not food_exists:
+        await db.execute(
+            Food.insert().values(
+                id=food_id,
+                name=item.name,
+                calories=item.calories,
+                total_fat=item.macros.total_fat,
+                saturated_fat=item.macros.saturated_fat,
+                cholesterol=item.macros.cholesterol,
+                sodium=item.macros.sodium,
+                carbohydrates=item.macros.carbohydrates,
+                dietary_fiber=item.macros.dietary_fiber,
+                sugars=item.macros.sugars,
+                protein=item.macros.protein,
+                serving_qty=item.serving_qty,
+                serving_unit=item.serving_unit,
+                serving_weight=item.serving_weight,
+                image_url=item.image_url
+            )
+        )
+    await db.execute(
+        FoodEaten.insert().values(
+            user_id=user_id,
+            food_id=food_id,
+            time_consumed=item.time_eaten,
+            servings=item.num_servings
+        )
+    )
+    return await db.fetch_one(
+        FoodEaten.select().where(
+            FoodEaten.c.user_id == user_id,
+            FoodEaten.c.food_id == food_id,
+            FoodEaten.c.time_consumed == item.time_eaten
+        )
+    )
+
 
 @app.delete("/delete_food_entry", response_model=None)
 async def delete_food_entry(uid: int, fid: str, time: datetime):
@@ -91,9 +137,18 @@ async def delete_food_entry(uid: int, fid: str, time: datetime):
     
 
 @app.get("/food_items_eaten", response_model=[FoodItemEaten])
-async def get_food_items(user_id: int, food_id: Union[str, None] = None, time_consumed: Union[datetime, None] = None):
+async def get_food_items(user_id: int, food_id: Union[str, None] = None, time_consumed: Union[date, datetime, None] = None):
     #TODO: Ensure user is authorized for this id, check request headers for session token 
-    pass
+    select_food_items = FoodEaten.select().where(FoodEaten.c.user_id == user_id)
+    if food_id:
+        select_food_items = select_food_items.where(FoodEaten.c.food_id == food_id)
+    if time_consumed:
+        select_food_items = select_food_items.where(FoodEaten.c.time_consumed == time_consumed)
+    return await db.fetch_all(
+        select_food_items.order_by(FoodEaten.c.time_consumed.desc())
+    )
+    
+
 
 @app.post("/new_exercise_entry", response_model=ExerciseDone)
 async def create_exercise_item(item: ExerciseEntry):

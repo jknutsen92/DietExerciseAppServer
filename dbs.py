@@ -14,25 +14,25 @@ from sqlalchemy import (
     String,
     Table
 )
+import enum
 
 DATABASE_NAME=      "dietapp.db"
 BACKUP_CONFIG_FILE= "config/backup.json"
 DATABASE_URL=       f"sqlite:///databases/{DATABASE_NAME}"
-SALT_PATH=          "./keys/salt.txt"
 
-database_backup = Backup(
-                    DATABASE_NAME, 
-                    BACKUP_CONFIG_FILE,
-                    external_drive_caching=True,
-                    cloud_caching=True
-)
-database_backup.load()
+# database_backup = Backup(
+#                     DATABASE_NAME, 
+#                     BACKUP_CONFIG_FILE,
+#                     external_drive_caching=True,
+#                     cloud_caching=False
+# )
+# database_backup.load()
 
 # DB Init
 metadata = MetaData()
 db = Database(DATABASE_URL)
 
-class GenderEnum(Enum):
+class Gender(enum.Enum):
     male = 0
     female = 1
 
@@ -44,12 +44,12 @@ User = Table(
     Column("first_name",        String(50),         nullable=False),
     Column("last_name",         String(50),         nullable=False),
     Column("email",             String(100),        nullable=False),
-    Column("pass_hash",         String(64),         nullable=False),        # SHA-256
+    Column("pass_hash",         String(256),        nullable=False),       # Argon2
     Column("goal_id",           Integer,            nullable=True),
     Column("birthdate",         Date,               nullable=False),
     Column("weight",            Float,              nullable=False),        # (kg)
     Column("height",            Float,              nullable=False),        # (cm)
-    Column("gender",            Enum(GenderEnum),   nullable=False)
+    Column("gender",            Enum(Gender),       nullable=False)
 )
 
 Food = Table(
@@ -100,6 +100,3 @@ ExerciseCompleted = Table(
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=True)
 metadata.create_all(engine)
-
-with open(SALT_PATH, "r") as salt_file:
-    salt = salt_file.readline()

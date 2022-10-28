@@ -70,7 +70,7 @@ class FoodEntry {
         serving_weight,
         macros,
         image_url,
-        time_consumed
+        time_eaten
     ) {
         this.name=              name;
         this.calories=          calories;
@@ -80,7 +80,7 @@ class FoodEntry {
         this.serving_weight=    serving_weight;
         this.macros=            macros;
         this.image_url=         image_url;
-        this.time_consumed=     time_consumed;
+        this.time_eaten=        time_eaten;
     }
 }
 

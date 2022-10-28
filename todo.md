@@ -4,18 +4,27 @@
 
 <br>
 
+- [x] Implement Argon2 for password storage
+
+<br>
+
 - [ ] Implement and test APIs for web server
-  - [ ] Create User
-  - [ ] Update User
+  - [x] Create User
+  - [x] Update User
   - [ ] Get Users
-  - [ ] Get User 
-  - [ ] Create FoodConsumed
+  - [x] Get User 
+  - [x] Create FoodConsumed
   - [ ] Delete FoodConsumed
   - [ ] Get FoodConsumed
   - [ ] Create exercise
   - [ ] Delete exercise
   - [ ] Get exercises
    
+<br>
+
+- [ ] Implement session management
+- [ ] Update APIs to check user session for API authorization
+
 <br>
 
 - [ ] Test all models in models.py
