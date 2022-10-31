@@ -11,15 +11,19 @@
 - [ ] Implement and test APIs for web server
   - [x] Create User
   - [x] Update User
-  - [ ] Get Users
+  - [x] Get Users
   - [x] Get User 
   - [x] Create FoodConsumed
-  - [ ] Delete FoodConsumed
-  - [ ] Get FoodConsumed
-  - [ ] Create exercise
-  - [ ] Delete exercise
-  - [ ] Get exercises
+  - [x] Delete FoodConsumed
+  - [x] Get FoodConsumed
+  - [x] Create exercise
+  - [x] Delete exercise
+  - [x] Get exercises
    
+<br>
+
+-[ ] Error handling on APIs
+
 <br>
 
 - [ ] Implement session management

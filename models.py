@@ -59,6 +59,21 @@ class FoodItem(BaseModel):
     serving_weight:     confloat(ge=0.0)
     image_url:          Optional[HttpUrl]
 
+class FoodUpdate(BaseModel):
+    calories:           confloat(ge=0.0)
+    total_fat:          confloat(ge=0.0)
+    saturated_fat:      confloat(ge=0.0)
+    cholesterol:        confloat(ge=0.0)
+    sodium:             confloat(ge=0.0)
+    carbohydrates:      confloat(ge=0.0)
+    dietary_fiber:      confloat(ge=0.0)
+    sugars:             confloat(ge=0.0)
+    protein:            confloat(ge=0.0)
+    serving_qty:        conint(gt=0)
+    serving_unit:       constr(max_length=50)
+    serving_weight:     confloat(ge=0.0)
+    image_url:          Optional[HttpUrl]
+
 
 class ExerciseEntry(BaseModel):
     name:               constr(max_length=50)
@@ -79,6 +94,8 @@ class ExerciseItem(BaseModel):
     name:               constr(max_length=50)
     calories_per_hour:  confloat(gt=0.0)
 
+class ExerciseUpdate(BaseModel):
+    calories_per_hour:  confloat(gt=0.0)
 
 class NewUserInfo(BaseModel):
     first_name:         constr(max_length=50)

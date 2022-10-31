@@ -1,0 +1,11 @@
+{
+    "first_name": "Jeffrey",
+    "last_name": "Knutsen",
+    "email": "user@example.com",
+    "password": "Password1!",
+    "goal_id": 0,
+    "birthdate": "1992-9-23",
+    "weight": 83.9146,
+    "height": 175.26,
+    "gender": 0
+  }

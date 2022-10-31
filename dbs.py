@@ -1,7 +1,6 @@
 from databases  import Database
 from backup     import Backup
 from sqlalchemy import (
-    BigInteger,
     Column,
     create_engine,
     Date,
@@ -20,13 +19,14 @@ DATABASE_NAME=      "dietapp.db"
 BACKUP_CONFIG_FILE= "config/backup.json"
 DATABASE_URL=       f"sqlite:///databases/{DATABASE_NAME}"
 
-# database_backup = Backup(
-#                     DATABASE_NAME, 
-#                     BACKUP_CONFIG_FILE,
-#                     external_drive_caching=True,
-#                     cloud_caching=False
-# )
-# database_backup.load()
+# Load backup if database is out of date
+database_backup = Backup(
+                    DATABASE_NAME, 
+                    BACKUP_CONFIG_FILE,
+                    external_drive_caching=True,
+                    cloud_caching=False
+)
+database_backup.load()
 
 # DB Init
 metadata = MetaData()
@@ -40,7 +40,7 @@ class Gender(enum.Enum):
 User = Table(
     "User",
     metadata,
-    Column("id",                BigInteger,         primary_key=True),
+    Column("id",                Integer,            primary_key=True, autoincrement=True),
     Column("first_name",        String(50),         nullable=False),
     Column("last_name",         String(50),         nullable=False),
     Column("email",             String(100),        nullable=False),
@@ -75,7 +75,7 @@ Food = Table(
 FoodEaten = Table(
     "FoodEaten",
     metadata,
-    Column("user_id",           BigInteger,         ForeignKey("User.id"), primary_key=True),
+    Column("user_id",           Integer,            ForeignKey("User.id"), primary_key=True),
     Column("food_id",           String(40),         ForeignKey("Food.id"), primary_key=True),
     Column("time_consumed",     DateTime,           primary_key=True),
     Column("servings",          Float,              nullable=False)
@@ -92,7 +92,7 @@ Exercise = Table(
 ExerciseCompleted = Table(
     "ExerciseCompleted",
     metadata,
-    Column("user_id",           BigInteger,         ForeignKey("User.id"), primary_key=True),
+    Column("user_id",           Integer,            ForeignKey("User.id"), primary_key=True),
     Column("exercise_id",       String(40),         ForeignKey("Exercise.id"), primary_key=True),
     Column("time_completed",    DateTime,           primary_key=True),
     Column("duration",          Float,              nullable=True)
