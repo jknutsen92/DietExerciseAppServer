@@ -8,7 +8,7 @@
 
 <br>
 
-- [ ] Implement and test APIs for web server
+- [x] Implement and test APIs for web server
   - [x] Create User
   - [x] Update User
   - [x] Get Users
@@ -22,7 +22,8 @@
    
 <br>
 
--[ ] Error handling on APIs
+- [ ] Error handling on APIs
+- [ ] Status Codes on all responses
 
 <br>
 
@@ -37,6 +38,10 @@
   - [ ] ExerciseDone
   - [ ] GenderEnum
   - [ ] NewUserInfo
+
+<br>
+
+- [ ] Make sure that all datetimes/datetimes from the client are in UTC 
 
 <br>
 

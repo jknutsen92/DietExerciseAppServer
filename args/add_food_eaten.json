@@ -1,0 +1,21 @@
+{
+    "name": "Testfood",
+    "calories": 100,
+    "num_servings": 200,
+    "serving_qty": 300,
+    "serving_unit": "cup",
+    "serving_weight": 400,
+    "macros": {
+      "total_fat": 10,
+      "saturated_fat": 20,
+      "cholesterol": 30,
+      "sodium": 40,
+      "carbohydrates": 50,
+      "dietary_fiber": 60,
+      "sugars": 70,
+      "protein": 80,
+      "potassium": 90
+    },
+    "image_url": "https://localhost.com/image.jpg",
+    "time_eaten": "2022-10-31T18:30:17.794Z"
+  }

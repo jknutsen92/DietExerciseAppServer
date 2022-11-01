@@ -23,7 +23,7 @@ DATABASE_URL=       f"sqlite:///databases/{DATABASE_NAME}"
 database_backup = Backup(
                     DATABASE_NAME, 
                     BACKUP_CONFIG_FILE,
-                    external_drive_caching=True,
+                    external_drive_caching=False,   # QA
                     cloud_caching=False
 )
 database_backup.load()

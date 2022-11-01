@@ -9,3 +9,4 @@ keys/*
 config/*.json
 json
 databases/schema.sql
+-- SQLite.sql

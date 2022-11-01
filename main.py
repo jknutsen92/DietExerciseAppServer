@@ -1,10 +1,12 @@
-from fastapi    import FastAPI
-from typing     import Union, List, Optional
-from datetime   import date, datetime
-from hashlib    import sha1
-from argon2     import PasswordHasher
-from dbs        import db, User, Food, FoodEaten, Exercise, ExerciseCompleted
-from models     import (
+from fastapi        import FastAPI, HTTPException
+from typing         import Union, List, Optional
+from sqlalchemy.sql import func
+from sqlalchemy     import select
+from datetime       import date, datetime
+from hashlib        import sha1
+from argon2         import PasswordHasher
+from dbs            import db, User, Food, FoodEaten, Exercise, ExerciseCompleted
+from models         import (
     ExerciseDone,
     ExerciseEntry,
     ExerciseItem,
@@ -20,7 +22,6 @@ from models     import (
 
 # Init dependenices
 ph = PasswordHasher()
-sha = sha1()
 
 # Metadata
 tags_metadata = [
@@ -62,8 +63,12 @@ async def shutdown():
     await db.disconnect()
 
 # Per-user app endpoints
-@app.post("/user", response_model=UserInfo, tags=["User"])
+@app.post("/user", response_model=UserInfo, tags=["User"], status_code=201)
 async def add_user(new_user: NewUserInfo):
+    email_in_use = await db.fetch_one(select([User.c.email]).where(User.c.email == new_user.email))
+    if email_in_use:
+        raise HTTPException(409, f"The email address {new_user.email} is already in use by an account")
+    
     id = await db.execute(
         User.insert().values(
             first_name=new_user.first_name,
@@ -94,8 +99,7 @@ async def update_user_measures(id: int, user_measures: UserMeasures):
     else:
         await db.execute(
             User.update().where(User.c.id == id).values(
-                weight=user_measures.weight,
-                height=user_measures.height
+                weight=user_measures.weight
             )
         )
     return await db.fetch_one(
@@ -109,12 +113,14 @@ async def get_user(id: int):
         User.select().where(User.c.id == id)
     )
 
-@app.post("/food_eaten/{user_id}", response_model=FoodItemEaten, tags=["Food Eaten"])
-async def create_food_entry(user_id: int, item: FoodEntry):
-    #TODO: Ensure user is authorized for this id, check request headers for session token 
-    food_id = sha.update(item.name.encode("utf-8")).hexdigest()
+@app.post("/food_eaten/{user_id}", response_model=FoodItemEaten, tags=["Food Eaten"], status_code=201)
+async def create_food_eaten(user_id: int, item: FoodEntry):
+    #TODO: Ensure user is authorized for this id, check request headers for session token
+    sha = sha1()
+    sha.update(item.name.encode("utf-8")) 
+    food_id = sha.hexdigest()
     food_exists = await db.fetch_val(
-        Food.select(1).where(Food.c.id == food_id)
+        Food.select(Food.c.id).where(Food.c.id == food_id)
     )
     if not food_exists:
         await db.execute(
@@ -153,8 +159,8 @@ async def create_food_entry(user_id: int, item: FoodEntry):
     )
 
 
-@app.delete("/food_eaten", tags=["Food Eaten"])
-async def delete_food_entry(uid: int, fid: str, time: datetime):
+@app.delete("/food_eaten", tags=["Food Eaten"], status_code=204)
+async def delete_food_eaten(uid: int, fid: str, time: datetime):
     #TODO: Ensure user is authorized for this id, check request headers for session token
     await db.execute(
         FoodEaten.delete().where(
@@ -166,24 +172,29 @@ async def delete_food_entry(uid: int, fid: str, time: datetime):
     
 
 @app.get("/food_eaten", response_model=List[FoodItemEaten], tags=["Food Eaten"])
-async def get_food_items(user_id: int, food_id: Optional[str] = None, time_consumed: Optional[Union[date, datetime]] = None):
-    #TODO: Ensure user is authorized for this id, check request headers for session token 
+async def get_food_eaten(user_id: int, food_id: Optional[str] = None, time_consumed: Optional[Union[date, datetime]] = None):
+    #TODO: Ensure user is authorized for this id, check request headers for session token
+    # TODO: Change the date comparison with datetime to account for the date UTC
     select_food_items = FoodEaten.select().where(FoodEaten.c.user_id == user_id)
     if food_id:
         select_food_items = select_food_items.where(FoodEaten.c.food_id == food_id)
-    if time_consumed:
+    if type(time_consumed) == datetime:
         select_food_items = select_food_items.where(FoodEaten.c.time_consumed == time_consumed)
+    elif type(time_consumed) == date:
+        select_food_items = select_food_items.where(func.date(FoodEaten.c.time_consumed) == time_consumed)
     return await db.fetch_all(
         select_food_items.order_by(FoodEaten.c.time_consumed.desc())
     )
 
 
-@app.post("/exercise_done/{user_id}", response_model=ExerciseDone, tags=["Exercise Done"])
-async def create_exercise_item(user_id: int, item: ExerciseEntry):
-    #TODO: Ensure user is authorized for this id, check request headers for session token 
-    exercise_id = sha.update(item.name.encode("utf-8")).hexdigest()
+@app.post("/exercise_done/{user_id}", response_model=ExerciseDone, tags=["Exercise Done"], status_code=201)
+async def create_exercise_done(user_id: int, item: ExerciseEntry):
+    #TODO: Ensure user is authorized for this id, check request headers for session token
+    sha = sha1()
+    sha.update(item.name.encode("utf-8"))
+    exercise_id = sha.hexdigest()
     exercise_exists = await db.fetch_val(
-        Exercise.select(1).where(Exercise.c.id == exercise_id)
+        Exercise.select().where(Exercise.c.id == exercise_id)
     )
     if not exercise_exists:
         await db.execute(
@@ -209,32 +220,35 @@ async def create_exercise_item(user_id: int, item: ExerciseEntry):
         )
     )
 
-@app.delete("/exercise_done", tags=["Exercise Done"])
-async def delete_food_entry(uid: int, eid: str, time: datetime):
+@app.delete("/exercise_done", tags=["Exercise Done"], status_code=204)
+async def delete_exercise_done(uid: int, eid: str, time: datetime):
     #TODO: Ensure user is authorized for this id, check request headers for session token
     await db.execute(
         ExerciseCompleted.delete().where(
             ExerciseCompleted.c.user_id == uid,
             ExerciseCompleted.c.exercise_id == eid,
-            ExerciseCompleted.c.time_consumed == time
+            ExerciseCompleted.c.time_completed == time
         )
     )
 
 @app.get("/exercise_done", response_model=List[ExerciseDone], tags=["Exercise Done"])
-async def get_food_items(user_id: int, exercise_id: Optional[str] = None, time_completed: Optional[Union[date, datetime]] = None):
-    #TODO: Ensure user is authorized for this id, check request headers for session token 
+async def get_exercise_done(user_id: int, exercise_id: Optional[str] = None, time_completed: Optional[Union[date, datetime]] = None):
+    #TODO: Ensure user is authorized for this id, check request headers for session token
+    # TODO: Change the date comparison with datetime to account for the date UTC
     select_exercise_items = ExerciseCompleted.select().where(ExerciseCompleted.c.user_id == user_id)
     if exercise_id:
         select_exercise_items = select_exercise_items.where(ExerciseCompleted.c.exercise_id == exercise_id)
-    if time_completed:
+    if type(time_completed) == datetime:
         select_exercise_items = select_exercise_items.where(ExerciseCompleted.c.time_completed == time_completed)
+    elif type(time_completed) == date:
+        select_exercise_items = select_exercise_items.where(func.date(ExerciseCompleted.c.time_completed) == time_completed)
     return await db.fetch_all(
         select_exercise_items.order_by(ExerciseCompleted.c.time_completed.desc())
     )
 
 # General app endpoints
 @app.get("/food", response_model=List[FoodItem], tags=["Food Data"])
-async def get_food_items(id: Optional[str] = None, name: Optional[str] = None):
+async def get_food_item(id: Optional[str] = None, name: Optional[str] = None):
     food_select = Food.select()
     if id:
         food_select = food_select.where(Food.c.id == id)
@@ -253,7 +267,7 @@ async def get_exercise_item(id: Optional[str] = None, name: Optional[str] = None
     return await db.fetch_all(exercise_select.order_by(Exercise.c.name.desc()))
 
 # Admin endpoints
-@app.delete("/user/{id}", tags=["User Data"])
+@app.delete("/user/{id}", tags=["User Data"], status_code=204)
 async def delete_user(id: int):
     # TODO: ensure user is an admin, check request headers for admin token
     # TODO: Error handling
@@ -292,7 +306,7 @@ async def update_food_item(id: str, update: FoodUpdate):
         Food.select().where(Food.c.id == id)
     )
 
-@app.delete("/food/{id}", tags=["Food Data"])
+@app.delete("/food/{id}", tags=["Food Data"], status_code=204)
 async def delete_food_item(id: str):
     # TODO: ensure user is an admin, check request headers for admin token
     await db.execute(Food.delete().where(Food.c.id == id))
@@ -309,7 +323,7 @@ async def update_exercise_item(id: str, update: ExerciseUpdate):
         Exercise.select().where(Exercise.c.id == id)
     )
 
-@app.delete("/exercise_item/{id}", tags=["Exercise Data"])
+@app.delete("/exercise_item/{id}", tags=["Exercise Data"], status_code=204)
 async def delete_exercise_item(id: str):
     # TODO: ensure user is an admin, check request headers for admin token
     await db.execute(Exercise.delete().where(Exercise.c.id == id))
