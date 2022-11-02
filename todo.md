@@ -22,8 +22,8 @@
    
 <br>
 
-- [ ] Error handling on APIs
-- [ ] Status Codes on all responses
+- [x] Error handling on APIs
+- [x] Status Codes on all responses
 
 <br>
 

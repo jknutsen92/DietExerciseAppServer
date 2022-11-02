@@ -77,7 +77,7 @@ FoodEaten = Table(
     metadata,
     Column("user_id",           Integer,            ForeignKey("User.id"), primary_key=True),
     Column("food_id",           String(40),         ForeignKey("Food.id"), primary_key=True),
-    Column("time_consumed",     DateTime,           primary_key=True),
+    Column("time_consumed",     DateTime,           primary_key=True),      # UTC
     Column("servings",          Float,              nullable=False)
 )
 
@@ -94,7 +94,7 @@ ExerciseCompleted = Table(
     metadata,
     Column("user_id",           Integer,            ForeignKey("User.id"), primary_key=True),
     Column("exercise_id",       String(40),         ForeignKey("Exercise.id"), primary_key=True),
-    Column("time_completed",    DateTime,           primary_key=True),
+    Column("time_completed",    DateTime,           primary_key=True),      # UTC
     Column("duration",          Float,              nullable=True)
 )
 
