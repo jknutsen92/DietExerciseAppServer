@@ -1,15 +1,15 @@
-from argon2.exceptions import VerifyMismatchError
-from fastapi        import FastAPI, HTTPException, Depends
+from argon2.exceptions  import VerifyMismatchError
+from fastapi            import FastAPI, HTTPException, Depends
 from fastapi.security   import OAuth2PasswordRequestForm
-from typing         import Union, List, Optional
-from sqlalchemy.sql import func
-from sqlalchemy     import select
-from sqlite3        import IntegrityError
-from datetime       import date, datetime
-from hashlib        import sha1
-from dbs            import db, User, Food, FoodEaten, Exercise, ExerciseCompleted
-from security       import AuthAdmin, AuthUser, get_current_admin, get_current_user, ph 
-from models         import (
+from typing             import Union, List, Optional
+from sqlalchemy.sql     import func
+from sqlalchemy         import select
+from sqlite3            import IntegrityError
+from datetime           import date, datetime
+from hashlib            import sha1
+from dbs                import db, User, Food, FoodEaten, Exercise, ExerciseCompleted
+from security           import AuthUser, create_access_token, get_current_user, ph 
+from models             import (
     ExerciseDone,
     ExerciseEntry,
     ExerciseItem,
@@ -25,6 +25,10 @@ from models         import (
 
 # Metadata
 tags_metadata = [
+    {
+        "name": "Auth",
+        "description": "User authentication"
+    },
     {
         "name": "User",
         "description": "User creates and manages their account"
@@ -54,25 +58,6 @@ tags_metadata = [
 # FastAPI init
 app = FastAPI(openapi_tags=tags_metadata)
 
-@app.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await db.fetch_one(User.select().where(User.c.email == form_data.username))
-    try:
-        ph.verify(user["pass_hash"], form_data.password)
-    except (VerifyMismatchError, NameError, TypeError) as e:
-        print(e)
-        raise HTTPException(400, "Invalid username or password")
-
-    return {
-        "access_token": user["id"],
-        "token_type": "bearer"
-    }
-
-@app.get("/login", response_model=AuthUser)
-async def get_logged_in_user(user: AuthUser = Depends(get_current_user)):
-    return user
-
-
 @app.on_event("startup")
 async def startup():
     await db.connect()
@@ -80,6 +65,31 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await db.disconnect()
+
+# Auth
+@app.post("/login", tags=["Auth"])
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await db.fetch_one(User.select().where(User.c.email == form_data.username))
+    try:
+        ph.verify(user.pass_hash, form_data.password)
+    except (VerifyMismatchError, AttributeError) as e:
+        print(e)
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Bearer"}                                          # Standard wants this header
+        )
+    token = create_access_token({
+        "sub": str(user.id)
+    })
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+@app.get("/current_user", response_model=AuthUser, tags=["Auth"])
+async def get_current_user(user: AuthUser = Depends(get_current_user)):
+    return user
 
 # Per-user app endpoints
 """
@@ -90,7 +100,10 @@ async def shutdown():
 @app.post("/user", response_model=UserInfo, tags=["User"], status_code=201)
 async def add_user(new_user: NewUserInfo):
     if await db.fetch_one(select([User.c.email]).where(User.c.email == new_user.email)):
-        raise HTTPException(409, f"The email address {new_user.email} is already in use by an account")
+        raise HTTPException(
+            status_code=409,
+            detail=f"The email address {new_user.email} is already in use by an account"
+        )
     
     id = await db.execute(
         User.insert().values(
@@ -121,7 +134,10 @@ async def update_user_measures(id: int, user_measures: UserMeasures, token: str 
     #TODO: Ensure user is authorized for this id with dependency
 
     if not await db.fetch_one(select([User.c.id]).where(User.c.id == id)):
-        raise HTTPException(404, "User does not exist")
+        raise HTTPException(
+            status_code=404,
+            detail="User does not exist"
+        )
 
     if user_measures.height:
         await db.execute(
@@ -152,7 +168,10 @@ async def get_user(id: int):
     #TODO: Ensure user is authorized for this id with dependency
 
     if not await db.fetch_one(select([User.c.id]).where(User.c.id == id)):
-        raise HTTPException(404, "User does not exist")
+        raise HTTPException(
+            status_code=404,
+            detail="User does not exist"
+        )
 
     return await db.fetch_one(
         User.select().where(User.c.id == id)
@@ -171,7 +190,10 @@ async def create_food_eaten(user_id: int, item: FoodEntry):
     #TODO: Ensure user is authorized for this id with dependency
 
     if not await db.fetch_one(select([User.c.id]).where(User.c.id == user_id)):
-        raise HTTPException(404, "User does not exist")
+        raise HTTPException(
+            status_code=404,
+            detail="User does not exist"
+        )
     
     sha = sha1()
     sha.update(item.name.encode("utf-8")) 
@@ -211,7 +233,10 @@ async def create_food_eaten(user_id: int, item: FoodEntry):
         )
     except IntegrityError as e:
         print(e)
-        raise HTTPException(409, f"Food {food_id} already exists for user {user_id} at {item.time_eaten}")
+        raise HTTPException(
+            status_code=409, 
+            detail=f"Food {food_id} already exists for user {user_id} at {item.time_eaten}"
+        )
 
     return await db.fetch_one(
         FoodEaten.select().where(
@@ -275,7 +300,10 @@ async def create_exercise_done(user_id: int, item: ExerciseEntry):
     #TODO: Ensure user is authorized for this id with dependency
 
     if not await db.fetch_one(select([User.c.id]).where(User.c.id == user_id)):
-        raise HTTPException(404, "User does not exist")
+        raise HTTPException(
+            status_code=404,
+            detail="User does not exist"
+        )
 
     sha = sha1()
     sha.update(item.name.encode("utf-8"))
@@ -303,7 +331,10 @@ async def create_exercise_done(user_id: int, item: ExerciseEntry):
         )
     except IntegrityError as e:
         print(e)
-        raise HTTPException(409, f"Exercise entry {exercise_id} for {user_id} at {item.time_completed} already exists")
+        raise HTTPException(
+            status_code=409, 
+            detail=f"Exercise entry {exercise_id} for {user_id} at {item.time_completed} already exists"
+        )
 
     return await db.fetch_one(
         ExerciseCompleted.select().where(
@@ -422,7 +453,10 @@ async def update_food_item(id: str, update: FoodUpdate):
     #TODO: Ensure user is authorized for this id with dependency
 
     if not await db.execute(select([Food.c.id]).where(Food.c.id == id)):
-        raise HTTPException(404, f"Food {id} does note exist")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Food {id} does note exist"
+        )
 
     await db.execute(
         Food.update().where(Food.c.id == id).values(
@@ -469,7 +503,10 @@ async def update_exercise_item(id: str, update: ExerciseUpdate):
     #TODO: Ensure user is authorized for this id with dependency
 
     if not await db.execute(select([Exercise.c.id]).where(Exercise.c.id == id)):
-        raise HTTPException(404, f"Exercise {id} does not exist")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Exercise {id} does not exist"
+        )
 
     await db.execute(
         Exercise.update().where(Exercise.c.id == id).values(
