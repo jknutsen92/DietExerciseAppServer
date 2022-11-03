@@ -27,17 +27,9 @@
 
 <br>
 
-- [ ] Implement session management
-- [ ] Update APIs to check user session for API authorization
-
-<br>
-
-- [ ] Test all models in models.py
-  - [ ] Macros
-  - [ ] FoodConsumed
-  - [ ] ExerciseDone
-  - [ ] GenderEnum
-  - [ ] NewUserInfo
+- [x] Implement authorization/authentication
+- [x] Update APIs to check user session for API authorization
+- [ ] Test API security
 
 <br>
 

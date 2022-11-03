@@ -4,11 +4,10 @@ from fastapi.security   import OAuth2PasswordRequestForm
 from typing             import Union, List, Optional
 from sqlalchemy.sql     import func
 from sqlalchemy         import select
-from sqlite3            import IntegrityError
+from sqlite3            import IntegrityError, DatabaseError
 from datetime           import date, datetime
-from hashlib            import sha1
 from dbs                import db, User, Food, FoodEaten, Exercise, ExerciseCompleted
-from security           import AuthUser, create_access_token, get_current_user, ph 
+from security           import AuthUser, create_access_token, get_current_user, ph, sha1_hash 
 from models             import (
     ExerciseDone,
     ExerciseEntry,
@@ -69,7 +68,8 @@ async def shutdown():
 # Auth
 @app.post("/login", tags=["Auth"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await db.fetch_one(User.select().where(User.c.email == form_data.username))
+    user_id = sha1_hash(form_data.username)
+    user = await db.fetch_one(User.select().where(User.c.id == user_id))
     try:
         ph.verify(user.pass_hash, form_data.password)
     except (VerifyMismatchError, AttributeError) as e:
@@ -80,7 +80,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={"WWW-Authenticate": "Bearer"}                                          # Standard wants this header
         )
     token = create_access_token({
-        "sub": str(user.id)
+        "sub": user_id
     })
     return {
         "access_token": token,
@@ -98,26 +98,28 @@ async def get_current_user(user: AuthUser = Depends(get_current_user)):
 422: Validation error
 """
 @app.post("/user", response_model=UserInfo, tags=["User"], status_code=201)
-async def add_user(new_user: NewUserInfo):
-    if await db.fetch_one(select([User.c.email]).where(User.c.email == new_user.email)):
+async def add_user(new_user: NewUserInfo):     
+    id = sha1_hash(new_user.email)
+    try:
+        await db.execute(
+            User.insert().values(
+                id=id,
+                email=new_user.email,
+                first_name=new_user.first_name,
+                last_name=new_user.last_name,
+                pass_hash=ph.hash(new_user.password),
+                goal_id=new_user.goal_id,
+                birthdate=new_user.birthdate,
+                weight=new_user.weight,
+                height=new_user.height,
+                gender=new_user.gender
+            )
+        )
+    except IntegrityError:
         raise HTTPException(
             status_code=409,
             detail=f"The email address {new_user.email} is already in use by an account"
         )
-    
-    id = await db.execute(
-        User.insert().values(
-            first_name=new_user.first_name,
-            last_name=new_user.last_name,
-            email=new_user.email,
-            pass_hash=ph.hash(new_user.password),
-            goal_id=new_user.goal_id,
-            birthdate=new_user.birthdate,
-            weight=new_user.weight,
-            height=new_user.height,
-            gender=new_user.gender
-        )
-    )
     return await db.fetch_one(
         User.select().where(User.c.id == id)
     )
@@ -125,33 +127,31 @@ async def add_user(new_user: NewUserInfo):
 """
 200: Updated succesfully
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 404: User does not exist
 422: Validation error
 """
 @app.put("/user/{id}", response_model=UserInfo, tags=["User"])
-async def update_user_measures(id: int, user_measures: UserMeasures, token: str = Depends(get_current_user)):
-    #TODO: Ensure user is authorized for this id with dependency
-
-    if not await db.fetch_one(select([User.c.id]).where(User.c.id == id)):
+async def update_user_measures(id: str, user_measures: UserMeasures, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == id and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
+    
+    if not await db.fetch_one(select(User.c.id).where(User.c.id == id)):
         raise HTTPException(
             status_code=404,
             detail="User does not exist"
         )
 
+    update_user = User.update().where(User.c.id == id)
     if user_measures.height:
-        await db.execute(
-            User.update().where(User.c.id == id).values(
-                weight=user_measures.weight,
-                height=user_measures.height
-            )
-        )
-    else:
-        await db.execute(
-            User.update().where(User.c.id == id).values(
-                weight=user_measures.weight
-            )
-        )
+        update_user = update_user.values(height=user_measures.height)
+    if user_measures.weight:
+        update_user = update_user.values(weight=user_measures.weight)
+    await db.execute(update_user)
+        
     return await db.fetch_one(
         User.select().where(User.c.id == id)
     )
@@ -159,45 +159,50 @@ async def update_user_measures(id: int, user_measures: UserMeasures, token: str 
 """
 200: User found
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 404: User does not exist
 422: Validation error
 """
 @app.get("/user/{id}", response_model=UserInfo, tags=["User"])
-async def get_user(id: int):    
-    #TODO: Ensure user is authorized for this id with dependency
+async def get_user(id: str, auth_user: AuthUser = Depends(get_current_user)):    
+    if not auth_user.id == id and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
-    if not await db.fetch_one(select([User.c.id]).where(User.c.id == id)):
+    user = await db.fetch_one(User.select().where(User.c.id == id))
+    if not user:
         raise HTTPException(
             status_code=404,
             detail="User does not exist"
         )
-
-    return await db.fetch_one(
-        User.select().where(User.c.id == id)
-    )
+    return user
 
 """
 201: Created succesfully
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 404: User does not exist
 409: Food entry already exists
 422: Validation error
 """
 @app.post("/food_eaten/{user_id}", response_model=FoodItemEaten, tags=["Food Eaten"], status_code=201)
-async def create_food_eaten(user_id: int, item: FoodEntry):
-    #TODO: Ensure user is authorized for this id with dependency
+async def create_food_eaten(user_id: str, item: FoodEntry, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == user_id and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
+
 
     if not await db.fetch_one(select([User.c.id]).where(User.c.id == user_id)):
         raise HTTPException(
             status_code=404,
             detail="User does not exist"
         )
-    
-    sha = sha1()
-    sha.update(item.name.encode("utf-8")) 
-    food_id = sha.hexdigest()
+     
+    food_id = sha1_hash(item.name)
     food_exists = await db.fetch_val(
         select([Food.c.id]).where(Food.c.id == food_id)
     )
@@ -249,12 +254,16 @@ async def create_food_eaten(user_id: int, item: FoodEntry):
 """
 204: Deleted successfully
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 422: Validation error
 """
 @app.delete("/food_eaten", tags=["Food Eaten"], status_code=204)
-async def delete_food_eaten(uid: int, fid: str, time: datetime):
-    #TODO: Ensure user is authorized for this id with dependency
+async def delete_food_eaten(uid: str, fid: str, time: datetime, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == uid and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     await db.execute(
         FoodEaten.delete().where(
@@ -267,12 +276,16 @@ async def delete_food_eaten(uid: int, fid: str, time: datetime):
 """
 200: Search successful
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 422: Validation error
 """
 @app.get("/food_eaten", response_model=List[FoodItemEaten], tags=["Food Eaten"])
-async def get_food_eaten(user_id: int, food_id: Optional[str] = None, time_consumed: Optional[Union[date, datetime]] = None):
-    #TODO: Ensure user is authorized for this id with dependency
+async def get_food_eaten(user_id: str, food_id: Optional[str] = None, time_consumed: Optional[Union[date, datetime]] = None, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == user_id and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     select_food_items = FoodEaten.select().where(FoodEaten.c.user_id == user_id)
     if food_id:
@@ -290,14 +303,18 @@ async def get_food_eaten(user_id: int, food_id: Optional[str] = None, time_consu
 """
 201: Created successfully
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 404: User does not exist
 409: Exercise entry already exists
 422: Validation error
 """
 @app.post("/exercise_done/{user_id}", response_model=ExerciseDone, tags=["Exercise Done"], status_code=201)
-async def create_exercise_done(user_id: int, item: ExerciseEntry):
-    #TODO: Ensure user is authorized for this id with dependency
+async def create_exercise_done(user_id: str, item: ExerciseEntry, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == user_id and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     if not await db.fetch_one(select([User.c.id]).where(User.c.id == user_id)):
         raise HTTPException(
@@ -305,9 +322,7 @@ async def create_exercise_done(user_id: int, item: ExerciseEntry):
             detail="User does not exist"
         )
 
-    sha = sha1()
-    sha.update(item.name.encode("utf-8"))
-    exercise_id = sha.hexdigest()
+    exercise_id = sha1_hash(item.name)
     exercise_exists = await db.fetch_val(
         Exercise.select().where(Exercise.c.id == exercise_id)
     )
@@ -347,12 +362,16 @@ async def create_exercise_done(user_id: int, item: ExerciseEntry):
 """
 204: Deleted successfully
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 422: Validation error
 """
 @app.delete("/exercise_done", tags=["Exercise Done"], status_code=204)
-async def delete_exercise_done(uid: int, eid: str, time: datetime):
-    #TODO: Ensure user is authorized for this id with dependency
+async def delete_exercise_done(uid: str, eid: str, time: datetime, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == uid and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     await db.execute(
         ExerciseCompleted.delete().where(
@@ -365,12 +384,16 @@ async def delete_exercise_done(uid: int, eid: str, time: datetime):
 """
 200: Search successful
 401: No API key, user session token
-402: User session token does not match the given user
+403: User session token does not match the given user
 422: Validation error
 """
 @app.get("/exercise_done", response_model=List[ExerciseDone], tags=["Exercise Done"])
-async def get_exercise_done(user_id: int, exercise_id: Optional[str] = None, time_completed: Optional[Union[date, datetime]] = None):
-    #TODO: Ensure user is authorized for this id with dependency
+async def get_exercise_done(user_id: str, exercise_id: Optional[str] = None, time_completed: Optional[Union[date, datetime]] = None, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.id == user_id and not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     select_exercise_items = ExerciseCompleted.select().where(ExerciseCompleted.c.user_id == user_id)
     if exercise_id:
@@ -416,12 +439,16 @@ async def get_exercise_item(id: Optional[str] = None, name: Optional[str] = None
 """
 204: Deleted successfully
 401: No API key, user session token
-402: Invalid API key
+403: Invalid API key
 422: Validation error
 """
 @app.delete("/user/{id}", tags=["User Data"], status_code=204)
-async def delete_user(id: int):
-    #TODO: Ensure user is authorized for this id with dependency
+async def delete_user(id: str, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     await db.execute(
         User.delete().where(User.c.id == id)
@@ -430,12 +457,16 @@ async def delete_user(id: int):
 """
 200: Search successful
 401: No API key, user session token
-402: Invalid API key
+403: Invalid API key
 422: Validation error
 """
 @app.get("/users", response_model=List[UserInfo], tags=["User Data"])
-async def get_users():
-    #TODO: Ensure user is authorized for this id with dependency
+async def get_users(auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     return await db.fetch_all(
         User.select()
@@ -444,15 +475,19 @@ async def get_users():
 """
 200: Updated succesfully
 401: No API key, user session token
-402: Invalid API key
+403: Invalid API key
 404: Food does not exist
 422: Validation error
 """
 @app.put("/food/{id}", response_model=FoodItem, tags=["Food Data"])
-async def update_food_item(id: str, update: FoodUpdate):
-    #TODO: Ensure user is authorized for this id with dependency
+async def update_food_item(id: str, update: FoodUpdate, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
-    if not await db.execute(select([Food.c.id]).where(Food.c.id == id)):
+    if not await db.fetch_one(select([Food.c.id]).where(Food.c.id == id)):
         raise HTTPException(
             status_code=404,
             detail=f"Food {id} does note exist"
@@ -482,27 +517,35 @@ async def update_food_item(id: str, update: FoodUpdate):
 """
 204: Deleted successfully
 401: No API key, user session token
-402: Invalid API key
+403: Invalid API key
 422: Validation error
 """
 @app.delete("/food/{id}", tags=["Food Data"], status_code=204)
-async def delete_food_item(id: str):
-    #TODO: Ensure user is authorized for this id with dependency
+async def delete_food_item(id: str, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
     await db.execute(Food.delete().where(Food.c.id == id))
 
 """
 200: Updated succesfully
 401: No API key, user session token
-402: Invalid API key
+403: Invalid API key
 404: Food does not exist
 422: Validation error
 """
 @app.put("/exercise_item/{id}", response_model=ExerciseItem, tags=["Exercise Data"])
-async def update_exercise_item(id: str, update: ExerciseUpdate):
-    #TODO: Ensure user is authorized for this id with dependency
+async def update_exercise_item(id: str, update: ExerciseUpdate, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
 
-    if not await db.execute(select([Exercise.c.id]).where(Exercise.c.id == id)):
+    if not await db.fetch_one(select([Exercise.c.id]).where(Exercise.c.id == id)):
         raise HTTPException(
             status_code=404,
             detail=f"Exercise {id} does not exist"
@@ -520,11 +563,15 @@ async def update_exercise_item(id: str, update: ExerciseUpdate):
 """
 204: Deleted successfully
 401: No API key, user session token
-402: Invalid API key
+403: Invalid API key
 422: Validation error
 """
 @app.delete("/exercise_item/{id}", tags=["Exercise Data"], status_code=204)
-async def delete_exercise_item(id: str):
-    #TODO: Ensure user is authorized for this id with dependency
+async def delete_exercise_item(id: str, auth_user: AuthUser = Depends(get_current_user)):
+    if not auth_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized user"
+        )
     
     await db.execute(Exercise.delete().where(Exercise.c.id == id))

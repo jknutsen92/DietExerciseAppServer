@@ -40,11 +40,11 @@ class Gender(enum.Enum):
 User = Table(
     "User",
     metadata,
-    Column("id",                Integer,            primary_key=True, autoincrement=True),
+    Column("id",                String(40),         primary_key=True),      # SHA-1
+    Column("email",             String(100),        nullable=False),
     Column("first_name",        String(50),         nullable=False),
     Column("last_name",         String(50),         nullable=False),
-    Column("email",             String(100),        nullable=False),
-    Column("pass_hash",         String(256),        nullable=False),       # Argon2
+    Column("pass_hash",         String(256),        nullable=False),        # Argon2
     Column("goal_id",           Integer,            nullable=True),
     Column("birthdate",         Date,               nullable=False),
     Column("weight",            Float,              nullable=False),        # (kg)
@@ -75,7 +75,7 @@ Food = Table(
 FoodEaten = Table(
     "FoodEaten",
     metadata,
-    Column("user_id",           Integer,            ForeignKey("User.id"), primary_key=True),
+    Column("user_id",           String(40),         ForeignKey("User.id"), primary_key=True),
     Column("food_id",           String(40),         ForeignKey("Food.id"), primary_key=True),
     Column("time_consumed",     DateTime,           primary_key=True),      # UTC
     Column("servings",          Float,              nullable=False)
@@ -92,7 +92,7 @@ Exercise = Table(
 ExerciseCompleted = Table(
     "ExerciseCompleted",
     metadata,
-    Column("user_id",           Integer,            ForeignKey("User.id"), primary_key=True),
+    Column("user_id",           String(40),         ForeignKey("User.id"), primary_key=True),
     Column("exercise_id",       String(40),         ForeignKey("Exercise.id"), primary_key=True),
     Column("time_completed",    DateTime,           primary_key=True),      # UTC
     Column("duration",          Float,              nullable=True)

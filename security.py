@@ -6,6 +6,7 @@ from fastapi.security   import OAuth2PasswordBearer, APIKeyHeader
 from pydantic           import BaseModel, EmailStr
 from dbs                import db, User
 from jose               import jwt, JWTError
+from hashlib            import sha1
 
 # JWT
 ACCESS_TOKEN_EXPIRE_MINUTES =   60
@@ -13,17 +14,17 @@ ALGORITHM =                     "HS256"
 SECRET_KEY =                    "a3563bd450da56146ab162ad7e38bc8036f6ca37755284a5fad86331adf1eea4"
 
 admins = {
-    1: "jknutsen92@gmail.com"
+    "ceb1bb68e0ac9c877e561596b1cc5bf4aae1722c": "jknutsen92@gmail.com"
 }
 
 class AuthUser(BaseModel):
-    id:         int
+    id:         str
     email:      EmailStr
     first_name: str
     last_name:  str
     is_admin:   bool
 
-oauth2_scheme_user =    OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme_user = OAuth2PasswordBearer(tokenUrl="login")
 
 async def get_current_user(token: str = Depends(oauth2_scheme_user)):
     unauthorized = HTTPException(
@@ -39,7 +40,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme_user)):
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-        id = int(data.get("sub"))
+        id = data.get("sub")
         if not id:
             raise unauthorized
     except JWTError as e:
@@ -67,5 +68,10 @@ def create_access_token(data: dict, expires: Optional[timedelta] = None):
         }
     )
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+
+def sha1_hash(string: str):
+    sha = sha1()
+    sha.update(string.encode("utf-8"))
+    return sha.hexdigest()
 
 ph = PasswordHasher()

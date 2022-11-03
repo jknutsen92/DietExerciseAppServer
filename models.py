@@ -36,7 +36,7 @@ class FoodEntry(BaseModel):
 
     
 class FoodItemEaten(BaseModel):
-    user_id:            int
+    user_id:            constr(min_length=40, max_length=40, regex=r"^[\dA-Fa-f]{40}$")
     food_id:            constr(min_length=40, max_length=40, regex=r"^[\dA-Fa-f]{40}$")
     time_consumed:      datetime
     servings:           confloat(gt=0.0)
@@ -83,7 +83,7 @@ class ExerciseEntry(BaseModel):
 
 
 class ExerciseDone(BaseModel):
-    user_id:            int
+    user_id:            constr(min_length=40, max_length=40, regex=r"^[\dA-Fa-f]{40}$")
     exercise_id:        constr(min_length=40, max_length=40, regex=r"^[\dA-Fa-f]{40}$")
     time_completed:     datetime
     duration:           confloat(ge=0.0)
