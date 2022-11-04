@@ -1,4 +1,3 @@
-// TODO: Rename to underscores
 class Macros {                  // Nutritionix              Measures
     constructor(                // /v2/natural/nutrients
         total_fat,              // nf_total_fat             (g)
